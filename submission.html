@@ -52,62 +52,61 @@ Promise.all([
   nodes = data[0];
   edges = data[1];
 
-  var links = edges;
-
- // var nodes = {};
-  var nodes = nodes;
-
-  links.forEach(function(link) {
-    var result = nodes.filter(function(node) {
-        return link.source === node.id;
-    });
-    link.source_avg_time = (result[0] !== undefined) ? result[0].avg_min : null;
-  });
-
-  links.forEach(function(link) {
-    var result = nodes.filter(function(node) {
-        return link.target === node.id;
-    });
-    link.target_avg_time = (result[0] !== undefined) ? result[0].avg_min : null;
-  });
+var links = edges;
+var nodes_1=nodes
+var nodes = {};
 
 
-
-  links.forEach(function(link) {
-    var result = nodes.filter(function(node) {
-        return link.source === node.id;
-    });
-    delete link.source;
-    link.source = (result[0] !== undefined) ? result[0].name : null;
-  });
-
-  links.forEach(function(link) {
-    var result1 = nodes.filter(function(node) {
-        return link.target === node.id;
-    });
-    delete link.target;
-    link.target = (result1[0] !== undefined) ? result1[0].name : null;
-  });
-
-
-
-
-    
-  links.forEach(function(link) {
-      link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
-      link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
-  });
-
-  console.log(links)
-
+console.log(nodes_1)
   
+  links.forEach(function(link) {
+      link.source = nodes[link.source] || (nodes[link.source] = {id: link.source});
+      link.target = nodes[link.target] || (nodes[link.target] = {id: link.target});
+  });
+  
+    links.forEach(function(link) {
+    var result = nodes_1.filter(function(node) {
+        return link.source.id === node.id;
+    });
+    link.source.player_name = (result[0] !== undefined) ? result[0].name : null;
+    link.source.group = (result[0] !== undefined) ? result[0].group : null;
+    link.source.avg_time = (result[0] !== undefined) ? result[0].avg_min : null;
+  });
 
-  var width = 1500,
-      height =1000;
+  links.forEach(function(link) {
+    var result1 = nodes_1.filter(function(node) {
+        return link.target.id === node.id;
+    });
+    link.target.player_name = (result1[0] !== undefined) ? result1[0].name : null;
+    link.target.group = (result1[0] !== undefined) ? result1[0].group : null;
+    link.target.avg_time = (result1[0] !== undefined) ? result1[0].avg_min : null;
+  });
+
+/*
+    links.forEach(function(link) {
+    var result = nodes_1.filter(function(node) {
+        return link.source.id === node.id;
+    });
+    link.source.group = (result[0] !== undefined) ? result[0].group : null;
+  });
+
+  links.forEach(function(link) {
+    var result = nodes_1.filter(function(node) {
+        return link.target.name === node.name;
+    });
+    link.target.group = (result[0] !== undefined) ? result[0].group : null;
+  });
+
+
+*/
+
+console.log(links)
+  var width = 2500,
+      height =1500;
 
   var force = d3.forceSimulation()
       .nodes(d3.values(nodes))
-      .force("link", d3.forceLink(links).distance(20))
+      .force("link", d3.forceLink(links).distance(1))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force("x", d3.forceX())
       .force("y", d3.forceY())
@@ -163,6 +162,39 @@ Promise.all([
     link.target.degree =link.target.degree+1;
     });
 
+
+/*
+  links.forEach(function(link) {
+    var result = nodes.filter(function(node) {
+        return link.source.name === node.name;
+    });
+    link.source.group = (result[0] !== undefined) ? result[0].group : null;
+  });
+
+  links.forEach(function(link) {
+    var result = nodes.filter(function(node) {
+        return link.target.name === node.name;
+    });
+    link.target.group = (result[0] !== undefined) ? result[0].group : null;
+  });
+
+
+    links.forEach(function(link) {
+    var result = nodes.filter(function(node) {
+        return link.source.name === node.name;
+    });
+    link.source.avg_time = (result[0] !== undefined) ? result[0].avg_min : null;
+  });
+
+  links.forEach(function(link) {
+    var result = nodes.filter(function(node) {
+        return link.target.name === node.name;
+    });
+    link.target.avg_time = (result[0] !== undefined) ? result[0].avg_min : null;
+  });
+
+*/
+
   var minimum_Degree = d3.min(
   d3.values(nodes), function(d)
   {
@@ -180,7 +212,7 @@ Promise.all([
 
   var minimum_avg_time = 
   d3.min(
-  d3.values(links), function(d)
+  d3.values(nodes_1), function(d)
   {
     return d.avg_min; 
   }
@@ -188,11 +220,14 @@ Promise.all([
 
   var maximum_avg_time =
   d3.max(
-  d3.values(links), function(d)
+  d3.values(nodes_1), function(d)
   { 
   return d.avg_min; 
   }
   );
+
+console.log(minimum_avg_time)
+console.log(maximum_avg_time)
 
   var nodescale_avg = d3.scaleSqrt()
   .domain( [minimum_avg_time, maximum_avg_time] )
@@ -207,10 +242,12 @@ Promise.all([
   .domain( [minimum_Degree, maximum_Degree] )
   .range( [10, 20] );
   
+  
   var colourscale= d3.scaleSqrt()
   .domain([minimum_Degree,maximum_Degree])
   .range(["#deebf7","#9ecae1","#3182bd"])
-
+  
+  var color = d3.scaleOrdinal(d3.schemeCategory20);
   function freenode(d) {
     d.fx = null;
     d.fy = null;
@@ -221,23 +258,20 @@ Promise.all([
 
   // add the nodes
   node.append("circle")
-   //   .attr("id", function(d){
-   //      return (d.name.replace(/\s+/g,'').toLowerCase());
-  //    })
       .attr("id", function(d){
           return (d.id);})
-      //.attr("r",5);
       .attr("r", function(d) {
-      return nodescale(d.degree);
+     //   return nodescale_avg(d.target.avg_time);
+        return nodescale_avg(d.avg_time);
       })
       .style("fill", function(d){
-      return colourscale(d.degree);
+      return colourscale_avg(d.avg_time);
       })
 
   //adding labels to the right of the nodes and bolding them
   node.append("text")
       .text(function(d){
-      return d.name;
+      return d.player_name;
       })
       .attr("x",6)
       .attr("y",-11)
@@ -289,11 +323,11 @@ Promise.all([
     //      d.fx = d.x;
     //      d.fy = d.y;
    //       }
-      d3.select(this) 
+   /*   d3.select(this) 
         .select("circle")
         .style("fill", "blue");
     
-
+*/
   };
 
 }).catch(function(error) {
