@@ -167,10 +167,16 @@ var y = d3.scaleOrdinal()
   return d.avg_min; 
   }
   );
-
+/*
   var nodescale_avg = d3.scaleSqrt()
   .domain( [minimum_avg_time, maximum_avg_time] )
   .range( [10, 20] );
+*/  
+
+  var nodescale_avg = d3.scaleLog()
+  .domain( [minimum_avg_time, maximum_avg_time] )
+  .range([10, 30]);
+
 
   var force = d3.forceSimulation()
       .nodes(d3.values(nodes))
@@ -202,7 +208,7 @@ var y = d3.scaleOrdinal()
       .enter()
       .append("path")
       .attr("class", function(d) { return "link " + d.type; })
-   //   .style('opacity', 0);
+      .style('opacity', 0);
       //giving color and dashes to the links based on their value
    //   .style("stroke-dasharray", function(d){ 
    //       if(d.value == 1) 
@@ -221,7 +227,8 @@ var y = d3.scaleOrdinal()
 
 
   // define the nodes
-  var node = svg.selectAll(".node")
+  var node = svg
+      .selectAll(".node")
       .data(force.nodes())
       .enter().append("g")
       .attr("class", "node")
@@ -239,8 +246,6 @@ var y = d3.scaleOrdinal()
     link.source.degree =link.source.degree+1;
     link.target.degree =link.target.degree+1;
     });
-
-
 
 
 
@@ -265,25 +270,80 @@ var y = d3.scaleOrdinal()
     d.fy = null;
     d3.select(this)
       .select("circle")
-      .style('fill', 'grey');
+      var filtered = path.filter(function(l){
+  return (d === l.source || d === l.target);
+})
+      var filtered1 = path.filter(function(l){
+  return (d.id !== l.source.id && d.id !== l.target.id);
+})
+    filtered.style("stroke-width", 2)
+    filtered1.style("display","block");
 };    
 
 var color = d3.scaleOrdinal(d3.schemeCategory10)
               .domain(number_groups)
-console.log(number_groups)
   // add the nodes
   node.append("circle")
       .attr("id", function(d){
           return (d.id);})
       .attr("r", function(d) {
-     //   return nodescale_avg(d.target.avg_time);
         return nodescale_avg(d.avg_time);
       })
       .style("fill", function(d){
-        console.log(d.group)
-        console.log(color(d.group))
       return color(d.group);
       })
+
+    node.on("mouseenter", (evt, d) => {
+      path.attr("display", "none")
+          .filter(l => l.id === d.id || l.id === d.id)
+          .attr("display", "block")
+          .style("opacity",1)
+    })
+
+node.on('click', function(d) {
+var filtered = path.filter(function(l){
+//  return (d === l.source || d === l.target);
+  return (d.id === l.source.id || d.id === l.target.id);
+})
+var filtered1 = path.filter(function(l){
+//  return (d === l.source || d === l.target);
+  return (d.id !== l.source.id && d.id !== l.target.id);
+})
+filtered.style("stroke-width", 5);
+filtered1.style("display","none");
+
+
+
+
+});
+
+
+
+  node.on('mouseover', function(d) {
+var filtered = path.filter(function(l){
+  return (d === l.source || d === l.target);
+})
+//select all the data associated with the link i.e. source and target data
+var selectedData = [];
+filtered.each(function(f){
+  selectedData.push(f.source);
+  selectedData.push(f.target);
+});
+//select all the circles for which we have collected the data above.
+
+//do transition with all selected DOMs
+
+  });
+  node.on('mouseleave', function(d) {
+var filtered = path.filter(function(l){
+  return (d === l.source || d === l.target)
+})
+filtered.style("stroke-width", 2)
+//select all the data associated with the link i.e. source and target data
+});
+  node.on('mouseleave',function(d){
+      path.style("opacity",0)
+  })
 
   //adding labels to the right of the nodes and bolding them
   node.append("text")
@@ -294,7 +354,7 @@ console.log(number_groups)
       .attr("y",-11)
       .style("font-weight","bold");
     
-      
+      console.log(force.nodes())
       
       
 
